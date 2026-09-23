@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { @apply bg-bg text-slate-100; }
+.panel { @apply bg-bg-panel border border-bg-border rounded-lg; }
+.btn { @apply px-3 py-2 rounded-md bg-accent text-bg font-medium text-sm hover:opacity-90 transition; }
+.btn-outline { @apply px-3 py-2 rounded-md border border-bg-border text-sm hover:border-accent transition; }
+.input { @apply w-full bg-bg-panel border border-bg-border rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent; }
+.label { @apply text-xs uppercase tracking-wide text-slate-400 mb-1 block; }

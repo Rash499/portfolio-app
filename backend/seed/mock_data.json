@@ -1,0 +1,965 @@
+{
+  "user": {
+    "email": "demo@architecture.dev",
+    "username": "demo-architect",
+    "full_name": "Demo Architecture Engineer",
+    "password": "Demo123!"
+  },
+  "portfolio": {
+    "slug": "demo-architect",
+    "title": "Demo Architecture Engineer",
+    "professional_title": "DevOps & Cloud Infrastructure Engineer",
+    "about": "A demonstration portfolio showing interactive application architecture, Azure infrastructure, Kubernetes, CI/CD, GitOps, security, observability, and data pipelines.",
+    "skills": [
+      "Azure",
+      "DevOps",
+      "Kubernetes",
+      "Docker",
+      "Terraform",
+      "GitHub Actions",
+      "GitOps",
+      "Argo CD",
+      "FastAPI",
+      "React",
+      "PostgreSQL",
+      "Prometheus",
+      "Grafana",
+      "Linux"
+    ],
+    "github_url": "https://github.com/example",
+    "linkedin_url": "https://www.linkedin.com/",
+    "website_url": "https://example.com",
+    "contact_email": "demo@architecture.dev",
+    "is_public": true,
+    "theme": "dark"
+  },
+  "projects": [
+    {
+      "slug": "cloud-native-platform",
+      "name": "Cloud Native Platform",
+      "short_description": "A containerized full-stack platform deployed to Kubernetes through GitHub Actions and GitOps.",
+      "full_description": "A reference cloud-native application demonstrating application architecture, REST APIs, PostgreSQL, Redis, Docker, Kubernetes, CI security scanning, container publishing, GitOps deployment, observability, and rollback.",
+      "status": "completed",
+      "start_date": "2026-01-01",
+      "end_date": "2026-06-30",
+      "technologies": [
+        "React",
+        "TypeScript",
+        "FastAPI",
+        "PostgreSQL",
+        "Redis",
+        "Docker",
+        "Kubernetes",
+        "GitHub Actions",
+        "Argo CD",
+        "Prometheus",
+        "Grafana",
+        "Trivy"
+      ],
+      "github_url": "https://github.com/example/cloud-native-platform",
+      "live_url": "https://example.com/cloud-native-platform",
+      "documentation_url": "https://example.com/docs/cloud-native-platform",
+      "key_features": [
+        "JWT authentication",
+        "REST API",
+        "Containerized services",
+        "Kubernetes deployment",
+        "GitOps reconciliation",
+        "Observability"
+      ],
+      "challenges": "Keeping application delivery, infrastructure configuration, security scanning, and Kubernetes deployment state consistent across environments.",
+      "solutions": "Separated application source from the GitOps repository and used CI to build validated images while Argo CD continuously reconciles Kubernetes desired state.",
+      "is_published": true,
+      "nodes": [
+        {
+          "key": "user",
+          "node_type": "user",
+          "name": "Users",
+          "x": 40,
+          "y": 250,
+          "description": "End users accessing the public application.",
+          "technology": "Web Browser",
+          "environment": "production",
+          "metadata": {
+            "role": "external user"
+          }
+        },
+        {
+          "key": "frontend",
+          "node_type": "frontend",
+          "name": "React Frontend",
+          "x": 260,
+          "y": 250,
+          "description": "Responsive web application used to interact with the platform.",
+          "technology": "React + TypeScript",
+          "version": "Vite",
+          "environment": "production",
+          "metadata": {
+            "port": 80,
+            "build": "npm run build",
+            "dependencies": [
+              "Backend API"
+            ]
+          }
+        },
+        {
+          "key": "ingress",
+          "node_type": "reverse_proxy",
+          "name": "Ingress / Nginx",
+          "x": 500,
+          "y": 250,
+          "description": "Routes external HTTP traffic to Kubernetes services.",
+          "technology": "Nginx Ingress",
+          "environment": "production",
+          "metadata": {
+            "protocol": "HTTPS",
+            "tls": true,
+            "routing": [
+              "/api -> backend",
+              "/ -> frontend"
+            ]
+          }
+        },
+        {
+          "key": "backend",
+          "node_type": "backend",
+          "name": "Backend API",
+          "x": 740,
+          "y": 180,
+          "description": "Main REST API handling authentication, portfolio data, projects, architecture, and API metadata.",
+          "technology": "FastAPI",
+          "version": "0.115",
+          "environment": "production",
+          "metadata": {
+            "port": 8000,
+            "endpoints": [
+              "GET /api/health",
+              "POST /api/auth/login",
+              "GET /api/projects/{id}",
+              "GET /api/projects/{id}/diagram"
+            ],
+            "security": [
+              "JWT",
+              "RBAC",
+              "Pydantic validation"
+            ],
+            "dependencies": [
+              "PostgreSQL",
+              "Redis"
+            ]
+          }
+        },
+        {
+          "key": "worker",
+          "node_type": "microservice",
+          "name": "Background Worker",
+          "x": 740,
+          "y": 390,
+          "description": "Processes asynchronous jobs such as notifications and background data processing.",
+          "technology": "Python Worker",
+          "environment": "production",
+          "metadata": {
+            "queue": "Redis",
+            "retry_policy": "3 retries with backoff"
+          }
+        },
+        {
+          "key": "postgres",
+          "node_type": "database",
+          "name": "PostgreSQL",
+          "x": 1010,
+          "y": 130,
+          "description": "Primary relational database for users, portfolios, projects, architecture nodes, edges, and API endpoints.",
+          "technology": "PostgreSQL",
+          "version": "16",
+          "environment": "production",
+          "metadata": {
+            "port": 5432,
+            "backup": "daily",
+            "encryption": "at rest",
+            "schema": "portfolio"
+          }
+        },
+        {
+          "key": "redis",
+          "node_type": "cache",
+          "name": "Redis",
+          "x": 1010,
+          "y": 340,
+          "description": "Cache and lightweight job queue.",
+          "technology": "Redis",
+          "version": "7",
+          "environment": "production",
+          "metadata": {
+            "port": 6379,
+            "uses": [
+              "cache",
+              "job queue"
+            ]
+          }
+        },
+        {
+          "key": "cluster",
+          "node_type": "kubernetes_cluster",
+          "name": "Kubernetes Cluster",
+          "x": 1270,
+          "y": 250,
+          "description": "Target runtime environment for frontend, API, worker, and supporting services.",
+          "technology": "Kubernetes",
+          "environment": "production",
+          "metadata": {
+            "namespaces": [
+              "frontend",
+              "backend",
+              "observability"
+            ],
+            "deployment": "GitOps"
+          }
+        },
+        {
+          "key": "git",
+          "node_type": "git_repository",
+          "name": "Application Repository",
+          "x": 40,
+          "y": 620,
+          "description": "Source repository containing application code, tests, Dockerfiles, and CI configuration.",
+          "technology": "GitHub",
+          "environment": "development",
+          "metadata": {
+            "branch": "main",
+            "pull_requests": true,
+            "contents": [
+              "frontend",
+              "backend",
+              "tests",
+              "Dockerfiles",
+              ".github/workflows"
+            ]
+          }
+        },
+        {
+          "key": "ci",
+          "node_type": "github_actions",
+          "name": "GitHub Actions CI",
+          "x": 280,
+          "y": 620,
+          "description": "Continuous integration pipeline that validates code and builds the container image.",
+          "technology": "GitHub Actions",
+          "environment": "ci",
+          "metadata": {
+            "trigger": [
+              "push",
+              "pull_request"
+            ],
+            "stages": [
+              "Checkout",
+              "Ruff",
+              "Bandit",
+              "Pytest",
+              "ESLint",
+              "Vitest",
+              "Build",
+              "Trivy"
+            ],
+            "artifact": "Docker image"
+          }
+        },
+        {
+          "key": "registry",
+          "node_type": "container_registry",
+          "name": "Container Registry",
+          "x": 540,
+          "y": 620,
+          "description": "Stores versioned container images produced by CI.",
+          "technology": "OCI Registry",
+          "environment": "production",
+          "metadata": {
+            "format": "OCI",
+            "tagging": [
+              "commit SHA",
+              "release tag"
+            ],
+            "scan": "Trivy"
+          }
+        },
+        {
+          "key": "gitops",
+          "node_type": "gitops_repository",
+          "name": "GitOps Repository",
+          "x": 800,
+          "y": 620,
+          "description": "Separate repository containing the desired Kubernetes deployment state.",
+          "technology": "Git",
+          "environment": "deployment",
+          "metadata": {
+            "branch": "main",
+            "tooling": [
+              "Helm",
+              "Kustomize"
+            ],
+            "paths": [
+              "environments/dev",
+              "environments/staging",
+              "environments/prod"
+            ],
+            "contains": [
+              "Deployments",
+              "Services",
+              "Ingress",
+              "ConfigMaps",
+              "Secret references"
+            ]
+          }
+        },
+        {
+          "key": "argocd",
+          "node_type": "argo_cd",
+          "name": "Argo CD",
+          "x": 1050,
+          "y": 620,
+          "description": "GitOps controller that continuously reconciles Kubernetes with the desired state stored in Git.",
+          "technology": "Argo CD",
+          "version": "2.x",
+          "environment": "production",
+          "metadata": {
+            "sync": "automatic",
+            "reconciliation": "continuous",
+            "drift_detection": true,
+            "rollback": "Git revert + reconciliation",
+            "target": "production cluster"
+          }
+        },
+        {
+          "key": "prometheus",
+          "node_type": "monitoring",
+          "name": "Prometheus",
+          "x": 1270,
+          "y": 470,
+          "description": "Collects application and infrastructure metrics.",
+          "technology": "Prometheus",
+          "environment": "production",
+          "metadata": {
+            "metrics": [
+              "request_rate",
+              "latency",
+              "error_rate",
+              "cpu",
+              "memory"
+            ]
+          }
+        },
+        {
+          "key": "grafana",
+          "node_type": "monitoring",
+          "name": "Grafana",
+          "x": 1490,
+          "y": 470,
+          "description": "Visualizes metrics and provides operational dashboards.",
+          "technology": "Grafana",
+          "environment": "production",
+          "metadata": {
+            "dashboards": [
+              "API health",
+              "Kubernetes",
+              "CI/CD",
+              "Infrastructure"
+            ]
+          }
+        },
+        {
+          "key": "security",
+          "node_type": "security",
+          "name": "Security Controls",
+          "x": 1490,
+          "y": 250,
+          "description": "Security controls across application delivery and runtime.",
+          "technology": "Trivy + Bandit + JWT",
+          "environment": "all",
+          "metadata": {
+            "controls": [
+              "JWT authentication",
+              "RBAC",
+              "SAST",
+              "Dependency scanning",
+              "Container scanning",
+              "TLS",
+              "Secret references"
+            ]
+          }
+        }
+      ],
+      "edges": [
+        [
+          "user",
+          "frontend",
+          "HTTPS"
+        ],
+        [
+          "frontend",
+          "ingress",
+          "HTTPS"
+        ],
+        [
+          "ingress",
+          "backend",
+          "/api"
+        ],
+        [
+          "backend",
+          "postgres",
+          "SQL"
+        ],
+        [
+          "backend",
+          "redis",
+          "Cache"
+        ],
+        [
+          "worker",
+          "redis",
+          "Jobs"
+        ],
+        [
+          "backend",
+          "cluster",
+          "Runs in"
+        ],
+        [
+          "worker",
+          "cluster",
+          "Runs in"
+        ],
+        [
+          "git",
+          "ci",
+          "Push / PR"
+        ],
+        [
+          "ci",
+          "registry",
+          "Push image"
+        ],
+        [
+          "ci",
+          "gitops",
+          "Update image tag"
+        ],
+        [
+          "gitops",
+          "argocd",
+          "Desired state"
+        ],
+        [
+          "argocd",
+          "cluster",
+          "Reconcile"
+        ],
+        [
+          "cluster",
+          "prometheus",
+          "Metrics"
+        ],
+        [
+          "prometheus",
+          "grafana",
+          "Metrics"
+        ],
+        [
+          "ci",
+          "security",
+          "Security gates"
+        ],
+        [
+          "cluster",
+          "security",
+          "Runtime controls"
+        ]
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/api/health",
+          "description": "Health check for the API service.",
+          "requires_auth": false,
+          "response_body": "{\"status\":\"ok\"}",
+          "status_codes": [
+            200
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/api/auth/login",
+          "description": "Authenticate a portfolio owner.",
+          "requires_auth": false,
+          "request_body": "{\"email\":\"demo@architecture.dev\",\"password\":\"Demo123!\"}",
+          "response_body": "{\"access_token\":\"...\",\"refresh_token\":\"...\"}",
+          "status_codes": [
+            200,
+            401
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/{project_id}/diagram",
+          "description": "Return architecture nodes and edges.",
+          "requires_auth": false,
+          "response_body": "{\"nodes\":[],\"edges\":[]}",
+          "status_codes": [
+            200,
+            404
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects/{project_id}/endpoints",
+          "description": "List documented API endpoints for a project.",
+          "requires_auth": false,
+          "response_body": "[]",
+          "status_codes": [
+            200,
+            404
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/api/projects/portfolio/{portfolio_id}",
+          "description": "Create a project inside an owned portfolio.",
+          "requires_auth": true,
+          "request_body": "{\"slug\":\"new-project\",\"name\":\"New Project\"}",
+          "response_body": "{\"id\":\"...\",\"name\":\"New Project\"}",
+          "status_codes": [
+            201,
+            401,
+            403,
+            409
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "ai-event-intelligence",
+      "name": "AI Event Intelligence Platform",
+      "short_description": "A local-first event intelligence platform with ingestion, classification, geolocation, and retrieval.",
+      "full_description": "A FastAPI and React platform that ingests public event/news feeds, deduplicates records, classifies events with a local LLM, stores structured data in SQLite, and exposes an interactive intelligence dashboard.",
+      "status": "development",
+      "start_date": "2026-07-01",
+      "end_date": null,
+      "technologies": [
+        "React",
+        "TypeScript",
+        "FastAPI",
+        "Python",
+        "Ollama",
+        "SQLite",
+        "GDELT",
+        "RSS",
+        "RAG"
+      ],
+      "github_url": "https://github.com/example/ai-event-intelligence",
+      "live_url": null,
+      "documentation_url": "https://example.com/docs/ai-event-intelligence",
+      "key_features": [
+        "RSS/GDELT ingestion",
+        "Deduplication",
+        "Local LLM classification",
+        "Country/geolocation extraction",
+        "RAG-ready event knowledge base"
+      ],
+      "challenges": "Combining continuously changing external data with deterministic processing and local AI inference.",
+      "solutions": "Use a staged ingestion pipeline with deduplication, structured classification, local Ollama inference, and persistent event records.",
+      "is_published": true,
+      "nodes": [
+        {
+          "key": "sources",
+          "node_type": "external_service",
+          "name": "GDELT / RSS Sources",
+          "x": 40,
+          "y": 260,
+          "description": "Public event and news feeds.",
+          "technology": "GDELT + RSS",
+          "environment": "external",
+          "metadata": {
+            "protocols": [
+              "HTTP",
+              "RSS"
+            ],
+            "data_format": [
+              "JSON",
+              "XML"
+            ]
+          }
+        },
+        {
+          "key": "ingest",
+          "node_type": "microservice",
+          "name": "Ingestion Service",
+          "x": 300,
+          "y": 260,
+          "description": "Fetches, normalizes, and deduplicates incoming events.",
+          "technology": "FastAPI + Python",
+          "environment": "development",
+          "metadata": {
+            "stages": [
+              "fetch",
+              "normalize",
+              "deduplicate"
+            ]
+          }
+        },
+        {
+          "key": "llm",
+          "node_type": "external_service",
+          "name": "Local Ollama",
+          "x": 560,
+          "y": 150,
+          "description": "Local model used for event classification and structured extraction.",
+          "technology": "Ollama",
+          "environment": "local",
+          "metadata": {
+            "privacy": "local inference",
+            "tasks": [
+              "classification",
+              "entity extraction"
+            ]
+          }
+        },
+        {
+          "key": "db",
+          "node_type": "database",
+          "name": "SQLite Event Store",
+          "x": 560,
+          "y": 360,
+          "description": "Stores normalized events and classification results.",
+          "technology": "SQLite",
+          "environment": "development",
+          "metadata": {
+            "tables": [
+              "events",
+              "sources",
+              "classifications"
+            ]
+          }
+        },
+        {
+          "key": "api",
+          "node_type": "api",
+          "name": "Intelligence API",
+          "x": 820,
+          "y": 260,
+          "description": "Serves event, search, analytics, and retrieval endpoints.",
+          "technology": "FastAPI",
+          "environment": "development",
+          "metadata": {
+            "endpoints": [
+              "GET /events",
+              "GET /events/{id}",
+              "GET /analytics",
+              "POST /query"
+            ]
+          }
+        },
+        {
+          "key": "frontend",
+          "node_type": "frontend",
+          "name": "Intelligence Dashboard",
+          "x": 1080,
+          "y": 260,
+          "description": "Interactive dashboard for exploring events and asking questions.",
+          "technology": "React + TypeScript",
+          "environment": "development",
+          "metadata": {
+            "views": [
+              "map",
+              "timeline",
+              "event details",
+              "RAG query"
+            ]
+          }
+        }
+      ],
+      "edges": [
+        [
+          "sources",
+          "ingest",
+          "Fetch"
+        ],
+        [
+          "ingest",
+          "llm",
+          "Classify"
+        ],
+        [
+          "ingest",
+          "db",
+          "Persist"
+        ],
+        [
+          "llm",
+          "db",
+          "Classification"
+        ],
+        [
+          "db",
+          "api",
+          "Query"
+        ],
+        [
+          "api",
+          "frontend",
+          "JSON"
+        ]
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/events",
+          "description": "List normalized events.",
+          "requires_auth": false,
+          "response_body": "[{\"id\":1,\"title\":\"Example event\"}]",
+          "status_codes": [
+            200
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/events/{id}",
+          "description": "Retrieve one event.",
+          "requires_auth": false,
+          "response_body": "{\"id\":1,\"title\":\"Example event\"}",
+          "status_codes": [
+            200,
+            404
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/query",
+          "description": "Ask a grounded question against the event knowledge base.",
+          "requires_auth": false,
+          "request_body": "{\"question\":\"What happened recently?\"}",
+          "response_body": "{\"answer\":\"...\",\"sources\":[]}",
+          "status_codes": [
+            200,
+            422
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "azure-secure-avd",
+      "name": "Azure Secure Virtual Desktop",
+      "short_description": "A secure Azure Virtual Desktop architecture with hybrid identity, networking, monitoring, and disaster recovery.",
+      "full_description": "A reference Azure infrastructure project demonstrating hub-spoke networking, Azure Virtual Desktop, hybrid identity, private endpoints, security controls, monitoring, and recovery testing.",
+      "status": "completed",
+      "start_date": "2025-11-01",
+      "end_date": "2026-06-13",
+      "technologies": [
+        "Azure",
+        "AVD",
+        "Entra ID",
+        "Azure Virtual Network",
+        "Windows Server",
+        "FSLogix",
+        "Log Analytics",
+        "Defender for Cloud",
+        "Terraform"
+      ],
+      "github_url": "https://github.com/example/azure-secure-avd",
+      "live_url": null,
+      "documentation_url": "https://example.com/docs/azure-secure-avd",
+      "key_features": [
+        "Hub-spoke networking",
+        "Hybrid identity",
+        "AVD host pools",
+        "FSLogix",
+        "Private endpoints",
+        "Recovery testing"
+      ],
+      "challenges": "Providing secure remote desktop access while maintaining identity integration, private connectivity, and recoverability.",
+      "solutions": "Use hub-spoke networking, hybrid identity, private endpoints, centralized monitoring, and tested Recovery Services Vault policies.",
+      "is_published": true,
+      "nodes": [
+        {
+          "key": "internet",
+          "node_type": "external_service",
+          "name": "Internet",
+          "x": 40,
+          "y": 280,
+          "description": "External user access.",
+          "technology": "HTTPS",
+          "environment": "external",
+          "metadata": {}
+        },
+        {
+          "key": "hub",
+          "node_type": "vpc",
+          "name": "Hub VNet",
+          "x": 280,
+          "y": 160,
+          "description": "Central network services and security controls.",
+          "technology": "Azure VNet",
+          "environment": "production",
+          "metadata": {
+            "address_space": "10.0.0.0/16",
+            "services": [
+              "Azure Firewall",
+              "VPN Gateway",
+              "Private DNS"
+            ]
+          }
+        },
+        {
+          "key": "spoke",
+          "node_type": "network",
+          "name": "AVD Spoke VNet",
+          "x": 280,
+          "y": 400,
+          "description": "Workload network hosting AVD session hosts.",
+          "technology": "Azure VNet",
+          "environment": "production",
+          "metadata": {
+            "address_space": "10.10.0.0/16",
+            "peering": "hub-to-spoke"
+          }
+        },
+        {
+          "key": "identity",
+          "node_type": "security",
+          "name": "Hybrid Identity",
+          "x": 560,
+          "y": 100,
+          "description": "On-premises AD integrated with Entra ID.",
+          "technology": "AD DS + Entra ID",
+          "environment": "production",
+          "metadata": {
+            "components": [
+              "Domain Controller",
+              "Entra Connect",
+              "MFA",
+              "SSO"
+            ]
+          }
+        },
+        {
+          "key": "avd",
+          "node_type": "cloud_resource",
+          "name": "AVD Host Pool",
+          "x": 560,
+          "y": 390,
+          "description": "Windows session hosts providing RemoteApp and desktop workloads.",
+          "technology": "Azure Virtual Desktop",
+          "environment": "production",
+          "metadata": {
+            "components": [
+              "Host Pool",
+              "Session Hosts",
+              "App Groups",
+              "Workspace",
+              "Scaling Plan",
+              "FSLogix"
+            ]
+          }
+        },
+        {
+          "key": "monitor",
+          "node_type": "monitoring",
+          "name": "Azure Monitor / Log Analytics",
+          "x": 840,
+          "y": 220,
+          "description": "Centralized logs, KQL queries, diagnostics, and monitoring.",
+          "technology": "Azure Monitor",
+          "environment": "production",
+          "metadata": {
+            "queries": [
+              "WVDConnections",
+              "WVDCheckpoints",
+              "WVDErrors"
+            ],
+            "alerts": [
+              "AVD connectivity",
+              "session health"
+            ]
+          }
+        },
+        {
+          "key": "security",
+          "node_type": "security",
+          "name": "Defender for Cloud",
+          "x": 840,
+          "y": 470,
+          "description": "Cloud security posture and workload protection.",
+          "technology": "Microsoft Defender for Cloud",
+          "environment": "production",
+          "metadata": {
+            "controls": [
+              "MDE",
+              "Update Manager",
+              "Private Endpoints",
+              "Encryption at Host"
+            ]
+          }
+        },
+        {
+          "key": "recovery",
+          "node_type": "storage",
+          "name": "Recovery Services Vault",
+          "x": 1100,
+          "y": 350,
+          "description": "Backup and recovery testing for critical workloads.",
+          "technology": "Azure Recovery Services Vault",
+          "environment": "production",
+          "metadata": {
+            "replication": [
+              "LRS",
+              "GRS"
+            ],
+            "testing": "restore validation"
+          }
+        }
+      ],
+      "edges": [
+        [
+          "internet",
+          "hub",
+          "VPN / HTTPS"
+        ],
+        [
+          "hub",
+          "spoke",
+          "VNet Peering"
+        ],
+        [
+          "identity",
+          "avd",
+          "Domain Join / SSO"
+        ],
+        [
+          "spoke",
+          "avd",
+          "Private network"
+        ],
+        [
+          "avd",
+          "monitor",
+          "Diagnostics"
+        ],
+        [
+          "avd",
+          "security",
+          "Security posture"
+        ],
+        [
+          "avd",
+          "recovery",
+          "Backup"
+        ],
+        [
+          "hub",
+          "identity",
+          "Hybrid connectivity"
+        ]
+      ],
+      "endpoints": []
+    }
+  ]
+}
