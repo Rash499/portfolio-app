@@ -10,7 +10,6 @@ router = APIRouter(prefix="/api/search", tags=["search"])
 
 @router.get("", response_model=List[schemas.SearchResult])
 def search(q: str = Query(min_length=1), db: Session = Depends(get_db)):
-    like = f"%{q.lower()}%"
     results: List[schemas.SearchResult] = []
 
     portfolios = db.query(models.Portfolio).filter(models.Portfolio.is_public.is_(True)).all()

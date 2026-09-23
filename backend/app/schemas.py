@@ -1,6 +1,6 @@
 import datetime as dt
-from typing import Optional, List, Any
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from typing import Optional, List, Literal
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, model_validator
 
 
 # ---------- Auth ----------
@@ -200,3 +200,57 @@ class SearchResult(BaseModel):
     label: str
     portfolio_slug: str
     project_slug: Optional[str] = None
+
+
+# ---------- Diagram export / import ("architecture as code") ----------
+class DiagramNodeItem(NodeBase):
+    """A node inside an exported/imported diagram document.
+
+    ``key`` is a document-local identifier so that edges can be referenced
+    before the nodes exist in the database.
+    """
+    key: str = Field(min_length=1, max_length=64)
+
+
+class DiagramEdgeItem(BaseModel):
+    source_key: str
+    target_key: str
+    label: Optional[str] = None
+
+
+class DiagramProjectInfo(BaseModel):
+    id: str
+    slug: str
+    name: str
+    portfolio_slug: Optional[str] = None
+
+
+class DiagramDocument(BaseModel):
+    format: Literal["archport-diagram"] = "archport-diagram"
+    version: int = 1
+    project: Optional[DiagramProjectInfo] = None
+    nodes: List[DiagramNodeItem] = []
+    edges: List[DiagramEdgeItem] = []
+
+    @model_validator(mode="after")
+    def _validate_keys(self) -> "DiagramDocument":
+        keys = [node.key for node in self.nodes]
+        if len(keys) != len(set(keys)):
+            raise ValueError("Duplicate node keys in the diagram document")
+        known = set(keys)
+        for edge in self.edges:
+            for role, key in (("source", edge.source_key), ("target", edge.target_key)):
+                if key not in known:
+                    raise ValueError(f"Edge {role}_key '{key}' does not match any node")
+        return self
+
+
+class MermaidImportRequest(BaseModel):
+    mermaid: str = Field(min_length=1, max_length=200_000)
+
+
+class ImportResult(BaseModel):
+    nodes_created: int
+    edges_created: int
+    nodes_deleted: int = 0
+    edges_deleted: int = 0

@@ -73,6 +73,50 @@ export interface ApiEndpoint {
   status_codes: number[]
 }
 
+/** JSON bundle produced by `/api/projects/{id}/export/json`. */
+export interface DiagramProjectInfo {
+  id: string
+  slug: string
+  name: string
+  portfolio_slug?: string | null
+}
+
+export interface DiagramNodeItem {
+  key: string
+  node_type: string
+  name: string
+  description?: string | null
+  technology?: string | null
+  version?: string | null
+  environment?: string | null
+  position_x: number
+  position_y: number
+  metadata_json: Record<string, any>
+}
+
+export interface DiagramEdgeItem {
+  source_key: string
+  target_key: string
+  label?: string | null
+}
+
+export interface DiagramDocument {
+  format: string
+  version: number
+  project?: DiagramProjectInfo | null
+  nodes: DiagramNodeItem[]
+  edges: DiagramEdgeItem[]
+}
+
+export type DiagramImportMode = 'merge' | 'replace'
+
+export interface DiagramImportResult {
+  nodes_created: number
+  edges_created: number
+  nodes_deleted: number
+  edges_deleted: number
+}
+
 export const NODE_TYPES = [
   'user', 'frontend', 'backend', 'api', 'microservice', 'database', 'cache', 'queue',
   'container', 'docker', 'kubernetes', 'kubernetes_cluster', 'kubernetes_namespace', 'vm',

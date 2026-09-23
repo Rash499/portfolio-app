@@ -6,8 +6,13 @@ import ReactFlow, {
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import api from '../api/client'
-import type { ArchNode, ArchEdge } from '../types'
+import type { ArchNode, ArchEdge, Project } from '../types'
 import { NODE_TYPES } from '../types'
+import DiagramImportPanel from '../components/DiagramImportPanel'
+import MermaidPanel from '../components/MermaidPanel'
+import { diagramFilename, downloadTextFile } from '../utils/diagramTransfer'
+
+type SidePanel = 'node' | 'mermaid' | 'import'
 
 function toFlowNode(n: ArchNode): Node {
   return {
@@ -34,6 +39,8 @@ export default function ArchitectureEditor() {
   const [metaText, setMetaText] = useState('{}')
   const [newName, setNewName] = useState('')
   const [newType, setNewType] = useState<string>('backend')
+  const [panel, setPanel] = useState<SidePanel | null>(null)
+  const [project, setProject] = useState<Project | null>(null)
 
   function load() {
     api.get(`/api/projects/${projectId}/diagram`).then((r) => {
@@ -44,6 +51,10 @@ export default function ArchitectureEditor() {
     })
   }
   useEffect(load, [projectId])
+
+  useEffect(() => {
+    api.get(`/api/projects/${projectId}`).then((r) => setProject(r.data)).catch(() => setProject(null))
+  }, [projectId])
 
   const onNodesChange = useCallback((changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)), [])
   const onEdgesChange = useCallback((changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)), [])
@@ -66,6 +77,7 @@ export default function ArchitectureEditor() {
     if (found) {
       setSelected(found)
       setMetaText(JSON.stringify(found.metadata_json || {}, null, 2))
+      setPanel('node')
     }
   }
 
@@ -96,6 +108,7 @@ export default function ArchitectureEditor() {
       metadata_json: parsedMeta,
     })
     setSelected(null)
+    setPanel(null)
     load()
   }
 
@@ -103,20 +116,56 @@ export default function ArchitectureEditor() {
     if (!selected) return
     await api.delete(`/api/nodes/${selected.id}`)
     setSelected(null)
+    setPanel(null)
     load()
+  }
+
+  /** Download the lossless JSON bundle for this project's diagram. */
+  async function downloadJson() {
+    const { data } = await api.get(`/api/projects/${projectId}/export/json`)
+    const slug = project?.slug || data?.project?.slug
+    downloadTextFile(
+      diagramFilename(slug, 'json'),
+      JSON.stringify(data, null, 2),
+      'application/json',
+    )
   }
 
   return (
     <div className="h-[calc(100vh-56px)] flex flex-col">
-      <div className="px-4 py-2 border-b border-bg-border flex items-center justify-between">
-        <Link to={`/dashboard/projects/${projectId}`} className="text-sm text-accent">← Back to project</Link>
-        <form onSubmit={addNode} className="flex items-center gap-2">
-          <select className="input !py-1 !w-auto" value={newType} onChange={(e) => setNewType(e.target.value)}>
-            {NODE_TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
-          </select>
-          <input className="input !py-1 !w-48" placeholder="Node name" value={newName} onChange={(e) => setNewName(e.target.value)} />
-          <button className="btn" type="submit">+ Add node</button>
-        </form>
+      <div className="px-4 py-2 border-b border-bg-border flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <Link to={`/dashboard/projects/${projectId}`} className="text-sm text-accent">← Back to project</Link>
+          {project && <span className="text-sm text-slate-400">{project.name}</span>}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            className={`btn-outline !py-1 text-xs ${panel === 'mermaid' ? 'border-accent text-accent' : ''}`}
+            type="button"
+            onClick={() => setPanel(panel === 'mermaid' ? null : 'mermaid')}
+          >
+            Mermaid
+          </button>
+          <button className="btn-outline !py-1 text-xs" type="button" onClick={downloadJson}>
+            Export JSON
+          </button>
+          <button
+            className={`btn-outline !py-1 text-xs ${panel === 'import' ? 'border-accent text-accent' : ''}`}
+            type="button"
+            onClick={() => setPanel(panel === 'import' ? null : 'import')}
+          >
+            Import
+          </button>
+
+          <form onSubmit={addNode} className="flex items-center gap-2 border-l border-bg-border pl-2">
+            <select className="input !py-1 !w-auto" value={newType} onChange={(e) => setNewType(e.target.value)}>
+              {NODE_TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
+            </select>
+            <input className="input !py-1 !w-48" placeholder="Node name" value={newName} onChange={(e) => setNewName(e.target.value)} />
+            <button className="btn" type="submit">+ Add node</button>
+          </form>
+        </div>
       </div>
 
       <div className="flex-1 flex">
@@ -137,50 +186,66 @@ export default function ArchitectureEditor() {
           </ReactFlow>
         </div>
 
-        {selected && (
-          <form onSubmit={saveSelected} className="w-96 border-l border-bg-border p-4 space-y-3 overflow-y-auto">
-            <h3 className="font-medium">Edit node</h3>
-            <div>
-              <label className="label">Name</label>
-              <input className="input" value={selected.name} onChange={(e) => setSelected({ ...selected, name: e.target.value })} />
-            </div>
-            <div>
-              <label className="label">Type</label>
-              <select className="input" value={selected.node_type} onChange={(e) => setSelected({ ...selected, node_type: e.target.value })}>
-                {NODE_TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="label">Description</label>
-              <textarea className="input" rows={2} value={selected.description || ''}
-                        onChange={(e) => setSelected({ ...selected, description: e.target.value })} />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
+        {panel && (
+          <div className="w-96 border-l border-bg-border p-4 space-y-3 overflow-y-auto">
+            {panel === 'node' && selected && (
+              <form onSubmit={saveSelected} className="space-y-3">
+                <h3 className="font-medium">Edit node</h3>
               <div>
-                <label className="label">Technology</label>
-                <input className="input" value={selected.technology || ''} onChange={(e) => setSelected({ ...selected, technology: e.target.value })} />
+                <label className="label">Name</label>
+                <input className="input" value={selected.name} onChange={(e) => setSelected({ ...selected, name: e.target.value })} />
               </div>
               <div>
-                <label className="label">Version</label>
-                <input className="input" value={selected.version || ''} onChange={(e) => setSelected({ ...selected, version: e.target.value })} />
+                <label className="label">Type</label>
+                <select className="input" value={selected.node_type} onChange={(e) => setSelected({ ...selected, node_type: e.target.value })}>
+                  {NODE_TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
+                </select>
               </div>
-            </div>
-            <div>
-              <label className="label">Environment</label>
-              <input className="input" value={selected.environment || ''} onChange={(e) => setSelected({ ...selected, environment: e.target.value })} />
-            </div>
-            <div>
-              <label className="label">
-                Metadata (JSON — e.g. endpoints, CI stages, GitOps sync info, security controls, dependencies)
-              </label>
-              <textarea className="input font-mono text-xs" rows={10} value={metaText} onChange={(e) => setMetaText(e.target.value)} />
-            </div>
-            <div className="flex gap-2">
-              <button className="btn" type="submit">Save node</button>
-              <button className="btn-outline text-red-400" type="button" onClick={deleteSelected}>Delete</button>
-              <button className="btn-outline" type="button" onClick={() => setSelected(null)}>Close</button>
-            </div>
-          </form>
+              <div>
+                <label className="label">Description</label>
+                <textarea className="input" rows={2} value={selected.description || ''}
+                          onChange={(e) => setSelected({ ...selected, description: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="label">Technology</label>
+                  <input className="input" value={selected.technology || ''} onChange={(e) => setSelected({ ...selected, technology: e.target.value })} />
+                </div>
+                <div>
+                  <label className="label">Version</label>
+                  <input className="input" value={selected.version || ''} onChange={(e) => setSelected({ ...selected, version: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label className="label">Environment</label>
+                <input className="input" value={selected.environment || ''} onChange={(e) => setSelected({ ...selected, environment: e.target.value })} />
+              </div>
+              <div>
+                <label className="label">
+                  Metadata (JSON — e.g. endpoints, CI stages, GitOps sync info, security controls, dependencies)
+                </label>
+                <textarea className="input font-mono text-xs" rows={10} value={metaText} onChange={(e) => setMetaText(e.target.value)} />
+              </div>
+              <div className="flex gap-2">
+                <button className="btn" type="submit">Save node</button>
+                <button className="btn-outline text-red-400" type="button" onClick={deleteSelected}>Delete</button>
+                <button className="btn-outline" type="button" onClick={() => { setSelected(null); setPanel(null) }}>Close</button>
+              </div>
+              </form>
+            )}
+
+            {panel === 'mermaid' && (
+              <MermaidPanel projectId={projectId!} slug={project?.slug} onClose={() => setPanel(null)} />
+            )}
+
+            {panel === 'import' && (
+              <DiagramImportPanel
+                projectId={projectId!}
+                onImported={() => { setPanel(null); load() }}
+                onClose={() => setPanel(null)}
+              />
+            )}
+          </div>
         )}
       </div>
     </div>

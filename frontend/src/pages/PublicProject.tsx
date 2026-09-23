@@ -5,6 +5,7 @@ import 'reactflow/dist/style.css'
 import api from '../api/client'
 import type { ApiEndpoint, ArchEdge, ArchNode, Project } from '../types'
 import NodeDetailPanel from '../components/NodeDetailPanel'
+import MermaidPanel from '../components/MermaidPanel'
 
 function toFlowNode(n: ArchNode): Node {
   return {
@@ -31,6 +32,7 @@ export default function PublicProject() {
   const [endpoints, setEndpoints] = useState<ApiEndpoint[]>([])
   const [selected, setSelected] = useState<ArchNode | null>(null)
   const [methodFilter, setMethodFilter] = useState('ALL')
+  const [showMermaid, setShowMermaid] = useState(false)
 
   useEffect(() => {
     api.get(`/api/projects/public/${slug}/${projectSlug}`).then((r) => {
@@ -74,7 +76,16 @@ export default function PublicProject() {
       </header>
 
       <section>
-        <h2 className="text-lg font-semibold mb-2">Interactive architecture</h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-lg font-semibold">Interactive architecture</h2>
+          <button
+            className={`btn-outline !py-1 text-xs ${showMermaid ? 'border-accent text-accent' : ''}`}
+            type="button"
+            onClick={() => setShowMermaid((visible) => !visible)}
+          >
+            {showMermaid ? 'Hide Mermaid' : 'View as Mermaid'}
+          </button>
+        </div>
         <p className="text-sm text-slate-400 mb-3">Click any component to inspect its details.</p>
         <div className="panel" style={{ height: 480 }}>
           <div className="h-full flex">
@@ -92,6 +103,12 @@ export default function PublicProject() {
             )}
           </div>
         </div>
+
+        {showMermaid && (
+          <div className="mt-3">
+            <MermaidPanel projectId={project.id} slug={projectSlug} />
+          </div>
+        )}
       </section>
 
       {endpoints.length > 0 && (

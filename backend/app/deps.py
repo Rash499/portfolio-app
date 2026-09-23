@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -23,6 +25,23 @@ def get_current_user(
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user
+
+
+def get_optional_user(
+    creds: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> Optional[models.User]:
+    """Return the authenticated user, or None for anonymous/mistyped requests.
+
+    Used by read-only endpoints that must stay reachable from public portfolio
+    pages while still recognising the owner of a private project.
+    """
+    if creds is None:
+        return None
+    user_id = decode_token(creds.credentials, settings.jwt_secret, "access")
+    if not user_id:
+        return None
+    return db.query(models.User).filter(models.User.id == user_id).first()
 
 
 def get_owned_portfolio(portfolio_id: str, db: Session, user: models.User) -> models.Portfolio:

@@ -26,13 +26,21 @@ This is a real, working, tested application — not a mockup. What's included:
   dependencies, endpoints, or anything else can be attached to any node type.
 - **Public architecture viewer**: read-only interactive diagram, click a node → see
   its full detail panel. This is the core differentiator from the spec.
+- **Architecture as code**: every diagram exports as a lossless **JSON bundle**
+  (nodes, edges, metadata, canvas positions) or as **Mermaid** source that renders
+  in GitHub READMEs, Notion or mermaid.live — and imports back either way, in
+  `merge` or `replace` mode, so diagrams can be pasted between projects, generated
+  by a script, or committed next to the code. Public/published projects expose the
+  Mermaid export to anonymous visitors (a "View as Mermaid" button on the project
+  page); importing always requires ownership.
 - **API Explorer**: per-project endpoint documentation (method, path, description,
   auth requirement, status codes), filterable by HTTP method.
 - **Global search** across public portfolios, projects, skills, and architecture nodes.
 - **Docker Compose** stack (Postgres + FastAPI + React), with health checks.
-- **Automated tests**: 14 backend tests (pytest) covering auth, ownership,
-  portfolio/project/architecture CRUD, public visibility rules, and search —
-  **85% backend coverage, all passing**. Frontend type-checks and builds cleanly.
+- **Automated tests**: 31 backend tests (pytest) covering auth, ownership,
+  portfolio/project/architecture CRUD, public visibility rules, search, and
+  diagram export/import round-trips — **plus 11 frontend tests (vitest) for the
+  diagram export helpers**. Frontend type-checks and builds cleanly.
 - **GitHub Actions CI**: backend lint (Ruff) + security scan (Bandit) + tests +
   coverage, frontend type-check + build, Docker image builds, Trivy filesystem scan.
 
@@ -76,6 +84,7 @@ portfolio-app/
 │   ├── app/
 │   │   ├── main.py, config.py, database.py, models.py, schemas.py
 │   │   ├── security.py, deps.py
+│   │   ├── diagram_io.py   JSON/Mermaid export + import codec
 │   │   └── routers/    auth, portfolios, projects, architecture, search
 │   └── tests/          pytest suite
 ├── frontend/           React + TypeScript + Vite app
@@ -84,7 +93,9 @@ portfolio-app/
 │       │                ProjectEditor, ArchitectureEditor (React Flow editor),
 │       │                PublicPortfolio, PublicProject (read-only diagram viewer),
 │       │                SearchPage
-│       ├── components/  NavBar, ProtectedRoute, NodeDetailPanel
+│       ├── components/  NavBar, ProtectedRoute, NodeDetailPanel,
+│       │                MermaidPanel, DiagramImportPanel
+│       ├── utils/       diagramTransfer (filename/download/clipboard helpers)
 │       ├── store/       auth (zustand)
 │       └── api/         axios client with automatic token refresh
 └── .github/workflows/ci.yml
@@ -147,6 +158,45 @@ Open **http://localhost:5173**.
 ```bash
 cd backend
 DATABASE_URL=sqlite:///:memory: pytest --cov=app --cov-report=term-missing
+```
+
+**Run the frontend tests:**
+
+```bash
+cd frontend
+npm run test
+```
+
+### Exporting a diagram as Mermaid or JSON (architecture as code)
+
+Open a project's architecture editor and use the toolbar:
+
+- **Mermaid** — shows the chart as Mermaid source with *Copy code*, *Copy README
+  block* (a fenced ```` ```mermaid ```` snippet), *Download .mmd* and a link to
+  mermaid.live. Node types become Mermaid shapes (databases become cylinders, CI
+  jobs subroutines, clusters hexagons, …) plus a `[type]` label suffix, and the
+  chart ends with `classDef` colouring per component family.
+- **Export JSON** — downloads the lossless bundle
+  (`<portfolio>-<project>-architecture.json`) with every field, including
+  `metadata_json` and canvas coordinates.
+- **Import** — paste or upload either format and pick `Merge` (append to the
+  current diagram) or `Replace` (clear it first). Imported Mermaid is auto-laid
+  out on a grid, because Mermaid code has no coordinates.
+
+Any published project inside a public portfolio also exposes the Mermaid export
+on its public page (**View as Mermaid**), which is how you get a README-ready
+diagram out of a portfolio without logging in.
+
+```bash
+# Same thing over the API:
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/api/projects/$PROJECT_ID/export/mermaid
+
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/projects/$PROJECT_ID/export/json \
+  > architecture.json
+
+curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  --data @architecture.json "http://localhost:8000/api/projects/$PROJECT_ID/import?mode=replace"
 ```
 
 ---
@@ -218,6 +268,11 @@ POST   /api/projects/{project_id}/endpoints
 GET    /api/projects/{project_id}/endpoints
 DELETE /api/endpoints/{endpoint_id}
 
+GET    /api/projects/{project_id}/export/json      # lossless JSON bundle (owner or public project)
+GET    /api/projects/{project_id}/export/mermaid   # Mermaid flowchart source (owner or public project)
+POST   /api/projects/{project_id}/import           # JSON bundle, ?mode=merge|replace (owner only)
+POST   /api/projects/{project_id}/import/mermaid   # Mermaid source, ?mode=merge|replace (owner only)
+
 GET    /api/search?q=...
 ```
 
@@ -234,3 +289,10 @@ GET    /api/search?q=...
 - No Playwright E2E suite; no live GitOps controller connection.
 - Search is a simple substring scan over public records, not a full-text index —
   fine at small scale, would want Postgres full-text search or similar at scale.
+- Diagram **import** from Mermaid understands the subset the exporter emits (node
+  definitions with shapes/labels, `-->`, `-->|label|`, `-- label -->` arrows,
+  `%%` comments, `classDef`/`class`/`style` lines, and `subgraph` blocks are
+  accepted but flattened). Exotic Mermaid syntax (`&` fan-out, `o--o`/`x--x`
+  links, `linkStyle` styling) is rejected with a line number rather than
+  silently mis-parsed. Mermaid is also lossy by design: `metadata_json`,
+  versions, environments and canvas coordinates only survive in the JSON bundle.

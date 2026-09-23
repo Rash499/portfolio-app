@@ -1,0 +1,9 @@
+# Lint configuration for `ruff check .` (run by .github/workflows/ci.yml).
+#
+# The selection is pinned to pyflakes (F) + pycodestyle errors (E4/E7/E9) —
+# the rules this codebase was written against. Ruff 0.16+ enables many extra
+# rules by default (UP, B, I, DTZ, ...) which existing files do not satisfy
+# yet; add them here deliberately once they have been cleaned up.
+
+[lint]
+select = ["E4", "E7", "E9", "F"]

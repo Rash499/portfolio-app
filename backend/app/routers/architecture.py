@@ -1,10 +1,11 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Literal, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app import models, schemas
-from app.deps import get_current_user, get_owned_project
+from app import diagram_io, models, schemas
+from app.deps import get_current_user, get_optional_user, get_owned_project
 
 router = APIRouter(prefix="/api", tags=["architecture"])
 
@@ -110,3 +111,75 @@ def delete_endpoint(endpoint_id: str, db: Session = Depends(get_db), user: model
     db.delete(endpoint)
     db.commit()
     return None
+
+
+# ---------- Export / import ("architecture as code") ----------
+def _readable_project(project_id: str, db: Session, user: Optional[models.User]) -> models.Project:
+    """A project is readable by its owner and by anyone once it is published
+    inside a public portfolio (so public pages can offer the Mermaid export)."""
+    project = _project_or_404(project_id, db)
+    if user is not None and project.portfolio.owner_id == user.id:
+        return project
+    if project.is_published and project.portfolio.is_public:
+        return project
+    raise HTTPException(status_code=404, detail="Project not found")
+
+
+@router.get("/projects/{project_id}/export/json")
+def export_diagram_json(
+    project_id: str,
+    db: Session = Depends(get_db),
+    user: Optional[models.User] = Depends(get_optional_user),
+):
+    """Lossless JSON bundle: every node field, edge and canvas position."""
+    project = _readable_project(project_id, db, user)
+    document = diagram_io.to_document(project)
+    filename = diagram_io.export_filename(project, "json")
+    return JSONResponse(
+        content=document.model_dump(),
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/projects/{project_id}/export/mermaid", response_class=PlainTextResponse)
+def export_diagram_mermaid(
+    project_id: str,
+    db: Session = Depends(get_db),
+    user: Optional[models.User] = Depends(get_optional_user),
+):
+    """Mermaid flowchart source, ready to paste into a README or mermaid.live."""
+    project = _readable_project(project_id, db, user)
+    return PlainTextResponse(
+        diagram_io.to_mermaid(project.nodes, project.edges, title=project.name),
+        media_type="text/plain; charset=utf-8",
+    )
+
+
+@router.post("/projects/{project_id}/import", response_model=schemas.ImportResult)
+def import_diagram(
+    project_id: str,
+    document: schemas.DiagramDocument,
+    mode: Literal["merge", "replace"] = Query("merge"),
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    """Import a JSON diagram bundle previously produced by the exporter."""
+    project = get_owned_project(project_id, db, user)
+    return diagram_io.apply_document(project, document, db, mode=mode)
+
+
+@router.post("/projects/{project_id}/import/mermaid", response_model=schemas.ImportResult)
+def import_diagram_mermaid(
+    project_id: str,
+    payload: schemas.MermaidImportRequest,
+    mode: Literal["merge", "replace"] = Query("merge"),
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    """Import a Mermaid flowchart (the exporter's subset, plus simple hand-written charts)."""
+    project = get_owned_project(project_id, db, user)
+    try:
+        document = diagram_io.from_mermaid(payload.mermaid)
+    except diagram_io.MermaidParseError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return diagram_io.apply_document(project, document, db, mode=mode)
