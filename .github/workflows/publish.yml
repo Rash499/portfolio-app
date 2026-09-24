@@ -1,3 +1,4 @@
+```yaml
 name: Build, Publish and Update GitOps
 
 on:
@@ -38,6 +39,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # --------------------------------------------------
+      # Build Docker images
+      # --------------------------------------------------
+
       - name: Build backend image
         run: |
           docker build \
@@ -49,6 +54,10 @@ jobs:
           docker build \
             -t ${{ env.REGISTRY }}/${{ steps.image.outputs.prefix }}-frontend:${{ steps.meta.outputs.tag }} \
             ./frontend
+
+      # --------------------------------------------------
+      # Security scanning
+      # --------------------------------------------------
 
       - name: Scan backend image
         uses: aquasecurity/trivy-action@master
@@ -66,6 +75,10 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: 0
 
+      # --------------------------------------------------
+      # Push images to GitHub Container Registry
+      # --------------------------------------------------
+
       - name: Push backend image
         run: |
           docker push \
@@ -76,6 +89,10 @@ jobs:
           docker push \
             ${{ env.REGISTRY }}/${{ steps.image.outputs.prefix }}-frontend:${{ steps.meta.outputs.tag }}
 
+      # --------------------------------------------------
+      # Checkout GitOps repository
+      # --------------------------------------------------
+
       - name: Checkout GitOps repository
         uses: actions/checkout@v4
         with:
@@ -83,3 +100,93 @@ jobs:
           token: ${{ secrets.GITOPS_TOKEN }}
           ref: master
           path: gitops
+
+      # --------------------------------------------------
+      # Update GitOps image tags
+      # --------------------------------------------------
+
+      - name: Update GitOps image tags
+        working-directory: gitops
+        env:
+          IMAGE_TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+
+          path = Path("environments/development/values.yaml")
+          text = path.read_text()
+
+          tag = os.environ["IMAGE_TAG"]
+
+          lines = text.splitlines()
+
+          in_images = False
+          current_image = None
+
+          for i, line in enumerate(lines):
+              stripped = line.strip()
+
+              # Enter images section
+              if stripped == "images:":
+                  in_images = True
+                  current_image = None
+                  continue
+
+              # Leave images section when another top-level
+              # YAML key starts
+              if in_images and line and not line.startswith(" "):
+                  in_images = False
+                  current_image = None
+                  continue
+
+              # Detect backend/frontend section
+              if in_images and stripped in ("backend:", "frontend:"):
+                  current_image = stripped[:-1]
+                  continue
+
+              # Update the tag belonging to backend/frontend
+              if (
+                  in_images
+                  and current_image in ("backend", "frontend")
+                  and stripped.startswith("tag:")
+              ):
+                  indent = line[:len(line) - len(line.lstrip())]
+                  lines[i] = f'{indent}tag: "{tag}"'
+                  current_image = None
+
+          path.write_text("\n".join(lines) + "\n")
+          PY
+
+          echo "----------------------------------------"
+          echo "Updated GitOps values.yaml:"
+          echo "----------------------------------------"
+
+          cat environments/development/values.yaml
+
+          echo "----------------------------------------"
+          echo "Git diff:"
+          echo "----------------------------------------"
+
+          git diff -- environments/development/values.yaml
+
+      # --------------------------------------------------
+      # Commit and push GitOps change
+      # --------------------------------------------------
+
+      - name: Commit and push GitOps update
+        working-directory: gitops
+        env:
+          IMAGE_TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add environments/development/values.yaml
+
+          git commit \
+            -m "chore: deploy application ${IMAGE_TAG}" \
+            || echo "No changes to commit"
+
+          git push origin master
+```
